@@ -1,0 +1,4113 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Waterloo OpenData API",
+    "version": "v3"
+  },
+  "paths": {
+    "/v3/AcademicOrganizations": {
+      "get": {
+        "tags": [
+          "AcademicOrganizations"
+        ],
+        "summary": "Gets all Academic Organization data",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AcademicOrganization"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/AcademicOrganizations/{organizationCode}": {
+      "get": {
+        "tags": [
+          "AcademicOrganizations"
+        ],
+        "summary": "Gets Academic Organization data for a specific entry by the Organization code",
+        "parameters": [
+          {
+            "name": "organizationCode",
+            "in": "path",
+            "description": "Unique Academic Organization code",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z]*$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcademicOrganization"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Account/Register": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Use this method to request an API key and begin your registration process",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "description": "A unique email that we can use to identify you and contact you. We will ask to confirm it.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "description": "A name and description of your project",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uri",
+            "in": "query",
+            "description": "The web address of your project: it's live location, app store entry, or similar",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v3/Account/{email}": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Use this method to see if an email has already been registered for an API key",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "description": "Email address to check",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v3/Account/{email}/notify": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Use this method to have us re-send the confirmation email to an account pending confirmation, if it exists. The activation code will be reset in the process.",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "description": "Email address to re-send confirmation email to",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v3/Account/{email}/{apiKey}/reset": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "User this method to put your account in pending confirmation status and generate a new API key. Your old key will no longer grant access. The account will need to be confirmed again before the new key grants access.",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "description": "Email address of associated account to reset",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "apiKey",
+            "in": "path",
+            "description": "Current API account key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v3/Account/Confirm": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Use this method to confirm your email and activate your account",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "description": "Email address you used to register",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "description": "Activation code we sent you in the confirmation email",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v3/ClassSchedules/{termCode}": {
+      "get": {
+        "tags": [
+          "ClassSchedules"
+        ],
+        "summary": "Get the Course IDs that have one or more active and associated schedules in the given Term",
+        "parameters": [
+          {
+            "name": "termCode",
+            "in": "path",
+            "description": "Waterloo Term code to filter on",
+            "required": true,
+            "schema": {
+              "maxLength": 4,
+              "minLength": 4,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/ClassSchedules/{termCode}/{courseId}": {
+      "get": {
+        "tags": [
+          "ClassSchedules"
+        ],
+        "summary": "Get Class data for a scheduled Course by Course ID, in a specific Term",
+        "parameters": [
+          {
+            "name": "termCode",
+            "in": "path",
+            "description": "Waterloo Term code to filter on",
+            "required": true,
+            "schema": {
+              "maxLength": 4,
+              "minLength": 4,
+              "type": "string"
+            }
+          },
+          {
+            "name": "courseId",
+            "in": "path",
+            "description": "Course ID to filter on",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Class"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/ClassSchedules/{termCode}/{subject}/{catalogNumber}": {
+      "get": {
+        "tags": [
+          "ClassSchedules"
+        ],
+        "summary": "Get Class data for a scheduled Course by Subject and catalog number, in a specific Term",
+        "parameters": [
+          {
+            "name": "termCode",
+            "in": "path",
+            "description": "Waterloo Term code to filter on",
+            "required": true,
+            "schema": {
+              "maxLength": 4,
+              "minLength": 4,
+              "type": "string"
+            }
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "description": "Academic Subject code to filter ron",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z]*$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "catalogNumber",
+            "in": "path",
+            "description": "Catalog number to filter on",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Class"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Courses/{termCode}": {
+      "get": {
+        "tags": [
+          "Courses"
+        ],
+        "summary": "Get all Course data for a Term",
+        "parameters": [
+          {
+            "name": "termCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "maxLength": 4,
+              "minLength": 4,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Course"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Courses/{termCode}/{courseId}": {
+      "get": {
+        "tags": [
+          "Courses"
+        ],
+        "summary": "Get Course catalog data filtered by Term and Course ID, multiple Courses are usually cross listed",
+        "parameters": [
+          {
+            "name": "termCode",
+            "in": "path",
+            "description": "Term code to filter on",
+            "required": true,
+            "schema": {
+              "maxLength": 4,
+              "minLength": 4,
+              "type": "string"
+            }
+          },
+          {
+            "name": "courseId",
+            "in": "path",
+            "description": "Course ID to filter on",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Course"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Courses/{termCode}/{courseId}/{offerNumber}": {
+      "get": {
+        "tags": [
+          "Courses"
+        ],
+        "summary": "Get Course catalog data filtered by Term, Course ID, and offer number",
+        "parameters": [
+          {
+            "name": "termCode",
+            "in": "path",
+            "description": "Term code to filter on",
+            "required": true,
+            "schema": {
+              "maxLength": 4,
+              "minLength": 4,
+              "type": "string"
+            }
+          },
+          {
+            "name": "courseId",
+            "in": "path",
+            "description": "Course ID to filter on",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "offerNumber",
+            "in": "path",
+            "description": "Offer number to filter on",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Course"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Courses/{termCode}/{subject}": {
+      "get": {
+        "tags": [
+          "Courses"
+        ],
+        "summary": "Get Course catalog data filtered by Term and Subject code",
+        "parameters": [
+          {
+            "name": "termCode",
+            "in": "path",
+            "description": "Term code to filter on",
+            "required": true,
+            "schema": {
+              "maxLength": 4,
+              "minLength": 4,
+              "type": "string"
+            }
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "description": "Academic Subject code to filter on",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z]*$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Course"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Courses/{termCode}/{subject}/{catalogNumber}": {
+      "get": {
+        "tags": [
+          "Courses"
+        ],
+        "summary": "Get Course catalog data filtered by Term, Subject, and catalog number",
+        "parameters": [
+          {
+            "name": "termCode",
+            "in": "path",
+            "description": "Term code to filter on",
+            "required": true,
+            "schema": {
+              "maxLength": 4,
+              "minLength": 4,
+              "type": "string"
+            }
+          },
+          {
+            "name": "subject",
+            "in": "path",
+            "description": "Academic Subject code to filter on",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z]*$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "catalogNumber",
+            "in": "path",
+            "description": "Course catalog number to filter on, ie: 101, 111W, 239",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Course"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/ExamSchedules": {
+      "get": {
+        "tags": [
+          "ExamSchedules"
+        ],
+        "summary": "Returns Exam Schedule data for the current Term",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Exam"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/ExamSchedules/{code}": {
+      "get": {
+        "tags": [
+          "ExamSchedules"
+        ],
+        "summary": "Returns Exam Schedule data for the requested Term",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "description": "Waterloo Term code",
+            "required": true,
+            "schema": {
+              "maxLength": 4,
+              "minLength": 4,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Exam"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/FoodServices/outlets": {
+      "get": {
+        "tags": [
+          "FoodServices"
+        ],
+        "summary": "Get all food service Outlet data",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodServicesOutlets"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/FoodServices/outlets/{id}": {
+      "get": {
+        "tags": [
+          "FoodServices"
+        ],
+        "summary": "Get specific food services Outlet data by Id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "WCMS object ID representing the Outlet",
+            "required": true,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodServicesOutlet"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/FoodServices/outlets/{name}": {
+      "get": {
+        "tags": [
+          "FoodServices"
+        ],
+        "summary": "Get specific food services Outlet data by Outlet name",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Name to filter Outlet by",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodServicesOutlet"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/FoodServices/franchises": {
+      "get": {
+        "tags": [
+          "FoodServices"
+        ],
+        "summary": "Get all food service Franchise data",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodServicesFranchises"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/FoodServices/franchises/{id}": {
+      "get": {
+        "tags": [
+          "FoodServices"
+        ],
+        "summary": "Get specific food sercices Franchise data by Id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "WCMS object ID representing the Franchise",
+            "required": true,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodServicesFranchise"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/FoodServices/franchises/{name}": {
+      "get": {
+        "tags": [
+          "FoodServices"
+        ],
+        "summary": "Get specific food services Franchise data by Franchise name",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Name to filter Franchise by",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodServicesFranchise"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/HolidayDates/paidholidays": {
+      "get": {
+        "tags": [
+          "HolidayDates"
+        ],
+        "summary": "Retrieves data for all paid holidays as published by Human Resources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaidHoliday"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/HolidayDates/paidholidays/{year}": {
+      "get": {
+        "tags": [
+          "HolidayDates"
+        ],
+        "summary": "Retrieves data for paid holidays associated to the given year as published by Human Resources",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "maximum": 2050,
+              "minimum": 2000,
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaidHoliday"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/HolidayDates/paidholidays/ics": {
+      "get": {
+        "tags": [
+          "HolidayDates"
+        ],
+        "summary": "Retrieves data for all paid holidays as published by Human Resources, as an ICS format feed. Allows anonymous access.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v3/ImportantDates": {
+      "get": {
+        "tags": [
+          "ImportantDates"
+        ],
+        "summary": "Returns all current data for Important Dates",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportantDate"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/ImportantDates/{year}": {
+      "get": {
+        "tags": [
+          "ImportantDates"
+        ],
+        "summary": "Returns important date data related to academic year",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "description": "Academic year to filter on",
+            "required": true,
+            "schema": {
+              "maximum": 2050,
+              "minimum": 2000,
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportantDate"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Locations": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "summary": "Get all building location data",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Location"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Locations/geojson": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "summary": "Get all building location data as GEO JSON",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationGeo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Locations/{locationCode}": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "summary": "Gets building by matched building code, case insensitive",
+        "parameters": [
+          {
+            "name": "locationCode",
+            "in": "path",
+            "description": "Building code to match",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Location"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Locations/{locationCode}/geojson": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "summary": "Gets building by matched building code, case insensitive, as GEO JSON",
+        "parameters": [
+          {
+            "name": "locationCode",
+            "in": "path",
+            "description": "Building code to match",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationGeo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Locations/search/{locationName}": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "summary": "Gets buildings by matched building name, contains, case insensitive",
+        "parameters": [
+          {
+            "name": "locationName",
+            "in": "path",
+            "description": "Text to match in building name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Location"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Locations/search/{locationName}/geojson": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "summary": "Gets buildings by matched building name, contains, case insensitive, as GEO JSON",
+        "parameters": [
+          {
+            "name": "locationName",
+            "in": "path",
+            "description": "Text to match in building name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationGeo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Subjects": {
+      "get": {
+        "tags": [
+          "Subjects"
+        ],
+        "summary": "Gets all Subject data",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Subject"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Subjects/{code}": {
+      "get": {
+        "tags": [
+          "Subjects"
+        ],
+        "summary": "Gets Subject data filtered by Subject code",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "description": "Specific Subject code",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z]*$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subject"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Subjects/associatedto/{organizationCode}": {
+      "get": {
+        "tags": [
+          "Subjects"
+        ],
+        "summary": "Gets Subject data for Subjects associated to an Academic Organization by Organization code",
+        "parameters": [
+          {
+            "name": "organizationCode",
+            "in": "path",
+            "description": "Academic Organization Code that associates to the Subjects",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z]*$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Subject"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Terms": {
+      "get": {
+        "tags": [
+          "Terms"
+        ],
+        "summary": "Gets all Term data that is effective at the current time",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Term"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Terms/current": {
+      "get": {
+        "tags": [
+          "Terms"
+        ],
+        "summary": "Gets the current Term data",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Term"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Terms/{code}": {
+      "get": {
+        "tags": [
+          "Terms"
+        ],
+        "summary": "Gets Term data for a specific Term filtered by code",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "description": "Term 4 digit Code",
+            "required": true,
+            "schema": {
+              "maxLength": 4,
+              "minLength": 4,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Term"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Wcms": {
+      "get": {
+        "tags": [
+          "Wcms"
+        ],
+        "summary": "Retrieves information about all active and published WCMS sites",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Site"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Wcms/{id}": {
+      "get": {
+        "tags": [
+          "Wcms"
+        ],
+        "summary": "Retrieves information about a specific WCMS site by Site Id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Unique site Id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Site"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Wcms/latestnews/{maxItems}": {
+      "get": {
+        "tags": [
+          "Wcms"
+        ],
+        "summary": "Retrieves the latest news items across all WCMS sites, ordered by posted date",
+        "parameters": [
+          {
+            "name": "maxItems",
+            "in": "path",
+            "description": "Number of items to retrieve, default 15, maximum 25",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 15
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SiteNews"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Wcms/latestevents/{maxItems}": {
+      "get": {
+        "tags": [
+          "Wcms"
+        ],
+        "summary": "Retrieves the latest events items across all WCMS sites, ordered by event start date",
+        "parameters": [
+          {
+            "name": "maxItems",
+            "in": "path",
+            "description": "Number of items to retrieve, default 15, maximum 25",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 15
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SiteEvent"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Wcms/latestposts/{maxItems}": {
+      "get": {
+        "tags": [
+          "Wcms"
+        ],
+        "summary": "Retrieves the latest blog post items across all WCMS sites, ordered by posted date",
+        "parameters": [
+          {
+            "name": "maxItems",
+            "in": "path",
+            "description": "Number of items to retrieve, default 15, maximum 25",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 15
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SiteBlogPost"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Wcms/{id}/news": {
+      "get": {
+        "tags": [
+          "Wcms"
+        ],
+        "summary": "Retrieves all news items for a specific WCMS site by Site Id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Unique Id for the Site",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "maxItems",
+            "in": "query",
+            "description": "(Optional) Maximum amount of items to retrieve",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "newestFirst",
+            "in": "query",
+            "description": "(Optional) Requires maxItems parameter, sorts items by created date, newest first",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SiteNews"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Wcms/{id}/posts": {
+      "get": {
+        "tags": [
+          "Wcms"
+        ],
+        "summary": "Retrieves all blog post items for a specific WCMS site by Site Id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Unique Id for the Site",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "maxItems",
+            "in": "query",
+            "description": "(Optional) Maximum amount of items to retrieve",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "newestFirst",
+            "in": "query",
+            "description": "(Optional) Requires maxItems parameter, sorts items by created date, newest first",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SiteBlogPost"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/Wcms/{id}/events": {
+      "get": {
+        "tags": [
+          "Wcms"
+        ],
+        "summary": "Retrieves all event items for a specific WCMS site by Site Id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Unique Id for the Site",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "maxItems",
+            "in": "query",
+            "description": "(Optional) Maximum amount of items to retrieve",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "newestFirst",
+            "in": "query",
+            "description": "(Optional) Requires maxItems parameter, sorts items by created date, newest first",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SiteEvent"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AcademicOrganization": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Unique Code of this Academic Organization",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "description": "The Name for this Academic Organization, most often the display name",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "description": "The short description for this Academic Organization",
+            "nullable": true
+          },
+          "descriptionFormal": {
+            "type": "string",
+            "description": "The formal description for this Academic Organization, most often used in official capacity",
+            "nullable": true
+          },
+          "associatedCampusCode": {
+            "type": "string",
+            "description": "The Code for the Campus that this Academic Organization is assigned to",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "An Academic Organization at Waterloo is similar to a department"
+      },
+      "Addon": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "photo": {
+            "nullable": true
+          },
+          "price": {
+            "type": "string",
+            "nullable": true
+          },
+          "calories": {
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Body": {
+        "type": "object",
+        "properties": {
+          "predicates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Changed": {
+        "type": "object",
+        "properties": {
+          "predicates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "datatype": {
+            "type": "string",
+            "nullable": true
+          },
+          "callback": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Class": {
+        "type": "object",
+        "properties": {
+          "courseId": {
+            "type": "string",
+            "description": "Course identifier number, not unique",
+            "nullable": true
+          },
+          "courseOfferNumber": {
+            "type": "integer",
+            "description": "Course offer number identifier for this class",
+            "format": "int32"
+          },
+          "sessionCode": {
+            "type": "string",
+            "description": "Session code for this class",
+            "nullable": true
+          },
+          "classSection": {
+            "type": "integer",
+            "description": "Number identifying the section of this class",
+            "format": "int32"
+          },
+          "termCode": {
+            "type": "string",
+            "description": "Waterloo academic term code",
+            "nullable": true
+          },
+          "classNumber": {
+            "type": "integer",
+            "description": "Class number identifier for this class",
+            "format": "int32"
+          },
+          "courseComponent": {
+            "type": "string",
+            "description": "Course component code for this class",
+            "nullable": true
+          },
+          "associatedClassCode": {
+            "type": "integer",
+            "description": "Associated class code for this class",
+            "format": "int32"
+          },
+          "maxEnrollmentCapacity": {
+            "type": "integer",
+            "description": "Indicates the maximum number of students that can enroll in this class",
+            "format": "int32"
+          },
+          "enrolledStudents": {
+            "type": "integer",
+            "description": "Indicates the current number of students enrolled in this class",
+            "format": "int32"
+          },
+          "enrollConsentCode": {
+            "type": "string",
+            "description": "Code describing whether No, Instructor, or Department consent to enroll is required. Overrides Course level information if different.",
+            "nullable": true
+          },
+          "enrollConsentDescription": {
+            "type": "string",
+            "description": "Description of the enroll requirement. Overrides Course level information if different.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "dropConsentCode": {
+            "type": "string",
+            "description": "Code describing whether No, Instructor, or Department consent to drop is required. Overrides Course level information if different.",
+            "nullable": true
+          },
+          "dropConsentDescription": {
+            "type": "string",
+            "description": "Description of the drop requirement. Overrides Course level information if different.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "scheduleData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassSchedule"
+            },
+            "description": "Schedule data for this class",
+            "nullable": true
+          },
+          "instructorData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassInstructor"
+            },
+            "description": "Instructor data for this class",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Represents an Academic class, which is a scheduled instance of a Course"
+      },
+      "ClassInstructor": {
+        "type": "object",
+        "properties": {
+          "courseId": {
+            "type": "string",
+            "description": "Course identifier number, not unique",
+            "nullable": true
+          },
+          "courseOfferNumber": {
+            "type": "integer",
+            "description": "Course offer number identifier for this class",
+            "format": "int32"
+          },
+          "sessionCode": {
+            "type": "string",
+            "description": "Session code number for this class",
+            "nullable": true
+          },
+          "classSection": {
+            "type": "integer",
+            "description": "Number identifying the section of this class",
+            "format": "int32"
+          },
+          "termCode": {
+            "type": "string",
+            "description": "Waterloo academic term code",
+            "nullable": true
+          },
+          "instructorRoleCode": {
+            "type": "string",
+            "description": "REMOVED for privacy. The code designation for the instructor's role in this class",
+            "nullable": true
+          },
+          "instructorFirstName": {
+            "type": "string",
+            "description": "REMOVED for privacy. The Instructors preferred first name",
+            "nullable": true
+          },
+          "instructorLastName": {
+            "type": "string",
+            "description": "REMOVED for privacy. The Instructors preferred last name",
+            "nullable": true
+          },
+          "instructorUniqueIdentifier": {
+            "type": "string",
+            "description": "REMOVED for privacy. A unique identifier that persists through name changes. Not guaranteed, but likely to be immutable for instructor.",
+            "nullable": true
+          },
+          "classMeetingNumber": {
+            "type": "integer",
+            "description": "Identifier for the class meeting this instructor is for",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "A person instructing a Class"
+      },
+      "ClassSchedule": {
+        "type": "object",
+        "properties": {
+          "courseId": {
+            "type": "string",
+            "description": "Course identifier number, not unique",
+            "nullable": true
+          },
+          "courseOfferNumber": {
+            "type": "integer",
+            "description": "Course offer number identifier for this class",
+            "format": "int32"
+          },
+          "sessionCode": {
+            "type": "string",
+            "description": "Session code number for this class",
+            "nullable": true
+          },
+          "classSection": {
+            "type": "integer",
+            "description": "Number identifying the section of this class",
+            "format": "int32"
+          },
+          "termCode": {
+            "type": "string",
+            "description": "Waterloo academic term code",
+            "nullable": true
+          },
+          "classMeetingNumber": {
+            "type": "integer",
+            "description": "Identifier for the class meeting this schedule data relates to",
+            "format": "int32"
+          },
+          "scheduleStartDate": {
+            "type": "string",
+            "description": "The date this schedule begins",
+            "format": "date-time"
+          },
+          "scheduleEndDate": {
+            "type": "string",
+            "description": "The date this schedule ends",
+            "format": "date-time"
+          },
+          "classMeetingStartTime": {
+            "type": "string",
+            "description": "The start time of this class",
+            "format": "date-time",
+            "nullable": true
+          },
+          "classMeetingEndTime": {
+            "type": "string",
+            "description": "The end time of this class",
+            "format": "date-time",
+            "nullable": true
+          },
+          "classMeetingDayPatternCode": {
+            "type": "string",
+            "description": "A code representing the days the class schedule takes place during the week",
+            "nullable": true
+          },
+          "classMeetingWeekPatternCode": {
+            "type": "string",
+            "description": "A Y|N per day representation of the class schedule taking place during the week",
+            "nullable": true
+          },
+          "locationName": {
+            "type": "string",
+            "description": "REMOVED for privacy. Building and room name for the location of this class schedule",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data describing scheduling and availability data for a Class"
+      },
+      "Closed": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "value2": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timezone_db": {
+            "type": "string",
+            "nullable": true
+          },
+          "date_type": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Combo": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "image": {
+            "$ref": "#/components/schemas/ComboImage"
+          },
+          "options": {
+            "type": "string",
+            "nullable": true
+          },
+          "item": {
+            "type": "string",
+            "nullable": true
+          },
+          "price": {
+            "type": "string",
+            "nullable": true
+          },
+          "calories": {
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ComboImage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "filemime": {
+            "type": "string",
+            "nullable": true
+          },
+          "filesize": {
+            "type": "string",
+            "nullable": true
+          },
+          "width": {
+            "type": "string",
+            "nullable": true
+          },
+          "height": {
+            "type": "string",
+            "nullable": true
+          },
+          "alt": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Comment_Count": {
+        "type": "object",
+        "properties": {
+          "predicates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "datatype": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Course": {
+        "type": "object",
+        "properties": {
+          "courseId": {
+            "type": "string",
+            "description": "Course Id that identifies this Course, not unique across terms",
+            "nullable": true
+          },
+          "courseOfferNumber": {
+            "type": "integer",
+            "description": "Course Offer Number identifies cross-listed and similar Courses that shared a Course Id in a Term",
+            "format": "int32"
+          },
+          "termCode": {
+            "type": "string",
+            "description": "Waterloo Term code for which this Course data applies",
+            "nullable": true
+          },
+          "termName": {
+            "type": "string",
+            "description": "Waterloo Term name for which this Course data applies",
+            "nullable": true
+          },
+          "associatedAcademicCareer": {
+            "type": "string",
+            "description": "Academic Career code associated with Course",
+            "nullable": true
+          },
+          "associatedAcademicGroupCode": {
+            "type": "string",
+            "description": "The Academic Group code that is assocaited to this Course",
+            "nullable": true
+          },
+          "associatedAcademicOrgCode": {
+            "type": "string",
+            "description": "The Academic Organization code that is associated to this Course",
+            "nullable": true
+          },
+          "subjectCode": {
+            "type": "string",
+            "description": "The Subject code for this Course",
+            "nullable": true
+          },
+          "catalogNumber": {
+            "type": "string",
+            "description": "The Catalog Number for this Course",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "description": "Course title, full name of course",
+            "nullable": true
+          },
+          "descriptionAbbreviated": {
+            "type": "string",
+            "description": "Short description of the course, often an abbreviation of the title",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the Course content and topics",
+            "nullable": true
+          },
+          "gradingBasis": {
+            "type": "string",
+            "description": "Code to describe the grading basis for this course, can be overriden at Class level",
+            "nullable": true
+          },
+          "courseComponentCode": {
+            "type": "string",
+            "description": "Course Component Code that describes if the course is a lecture, tutorial, etc.",
+            "nullable": true
+          },
+          "enrollConsentCode": {
+            "type": "string",
+            "description": "Code describing whether No, Instructor, or Department consent to enroll is required. Can be overwridden at Class level.",
+            "nullable": true
+          },
+          "enrollConsentDescription": {
+            "type": "string",
+            "description": "Description of the enroll requirement. Can be overwridden at Class level.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "dropConsentCode": {
+            "type": "string",
+            "description": "Code describing whether No, Instructor, or Department consent to drop is required. Can be overwridden at Class level.",
+            "nullable": true
+          },
+          "dropConsentDescription": {
+            "type": "string",
+            "description": "Description of the drop requirement. Can be overwridden at Class level.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "requirementsDescription": {
+            "type": "string",
+            "description": "Description of the Course requirements, such as pre-requisites, anti-requisites, and co-requisites",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "An academic Course at Waterloo, a Course can be scheduled to become a Class"
+      },
+      "Created": {
+        "type": "object",
+        "properties": {
+          "predicates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "datatype": {
+            "type": "string",
+            "nullable": true
+          },
+          "callback": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Cuisine": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "self": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Current": {
+        "type": "object",
+        "properties": {
+          "hid": {
+            "type": "string",
+            "nullable": true
+          },
+          "vid": {
+            "type": "string",
+            "nullable": true
+          },
+          "nid": {
+            "type": "string",
+            "nullable": true
+          },
+          "from_state": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "uid": {
+            "type": "string",
+            "nullable": true
+          },
+          "stamp": {
+            "type": "string",
+            "nullable": true
+          },
+          "published": {
+            "type": "string",
+            "nullable": true
+          },
+          "is_current": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "timestamp": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Data": {
+        "type": "object",
+        "properties": {
+          "en": {
+            "$ref": "#/components/schemas/En2"
+          }
+        },
+        "additionalProperties": false
+      },
+      "En": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "nullable": true
+          },
+          "format": {
+            "nullable": true
+          },
+          "safe_value": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "En1": {
+        "type": "object",
+        "properties": {
+          "robots": {
+            "$ref": "#/components/schemas/Robots"
+          }
+        },
+        "additionalProperties": false
+      },
+      "En2": {
+        "type": "object",
+        "properties": {
+          "entity_type": {
+            "type": "string",
+            "nullable": true
+          },
+          "entity_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "revision_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "language": {
+            "type": "string",
+            "nullable": true
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "uid": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "translate": {
+            "type": "string",
+            "nullable": true
+          },
+          "created": {
+            "type": "string",
+            "nullable": true
+          },
+          "changed": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Exam": {
+        "type": "object",
+        "properties": {
+          "examDisplayName": {
+            "type": "string",
+            "description": "The name of the Exam, representative of the Course name",
+            "nullable": true
+          },
+          "sections": {
+            "type": "string",
+            "description": "Sections of the Class this Exam schedule is applicable to",
+            "nullable": true
+          },
+          "isOnlineDescription": {
+            "type": "string",
+            "description": "Indicates whether this Exam is held online, or provides an alternate description",
+            "nullable": true
+          },
+          "day": {
+            "type": "string",
+            "description": "Day name on which this Exam is scheduled to take place",
+            "nullable": true
+          },
+          "location": {
+            "type": "string",
+            "description": "Description of the location of the Exam",
+            "nullable": true
+          },
+          "examWindowStartDate": {
+            "type": "string",
+            "description": "The date the Exam is scheduled for",
+            "nullable": true
+          },
+          "examWindowStartTime": {
+            "type": "string",
+            "description": "The time the Exam is scheduled to start",
+            "nullable": true
+          },
+          "examDuration": {
+            "type": "string",
+            "description": "The scheduled duration of the Exam",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes about this Exam schedule",
+            "nullable": true
+          },
+          "termCode": {
+            "type": "string",
+            "description": "Term Code for the Term this Exam is associated with",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Represents a scheduled Exam for a Class"
+      },
+      "Feature": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Type of Feature",
+            "nullable": true,
+            "readOnly": true
+          },
+          "properties": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/Geometry"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Feature of location collection"
+      },
+      "Field_Combos": {
+        "type": "object",
+        "properties": {
+          "und": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Und"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Field_Franchise_Logo": {
+        "type": "object",
+        "properties": {
+          "und": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Und1"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FoodServicesFranchise": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "self": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "logo": {
+            "$ref": "#/components/schemas/Logo"
+          },
+          "combos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Combo"
+            },
+            "nullable": true
+          },
+          "individualitems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IndividualItem"
+            },
+            "nullable": true
+          },
+          "addons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Addon"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FoodServicesFranchises": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FoodServicesFranchise"
+            },
+            "nullable": true
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "self": {
+            "$ref": "#/components/schemas/FoodServicesFranchisesSelf"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FoodServicesFranchisesSelf": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "href": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FoodServicesOutlet": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "self": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "image": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FoodServicesOutletImage"
+            },
+            "nullable": true
+          },
+          "photo": {
+            "$ref": "#/components/schemas/FoodServicesOutletPhoto"
+          },
+          "features": {
+            "type": "string",
+            "nullable": true
+          },
+          "outlettype": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OutletType"
+            },
+            "nullable": true
+          },
+          "outletlocation": {
+            "type": "string",
+            "nullable": true
+          },
+          "locationlink": {
+            "$ref": "#/components/schemas/LocationLink"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "location": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OutletLocation"
+            },
+            "nullable": true
+          },
+          "summary": {
+            "type": "string",
+            "nullable": true
+          },
+          "cuisine": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Cuisine"
+            },
+            "nullable": true
+          },
+          "openinghours": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpeningHour"
+            },
+            "nullable": true
+          },
+          "paymentaccepted": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentAccepted"
+            },
+            "nullable": true
+          },
+          "closed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Closed"
+            },
+            "nullable": true
+          },
+          "hourschange": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HoursChange"
+            },
+            "nullable": true
+          },
+          "notice": {
+            "type": "string",
+            "nullable": true
+          },
+          "franchisemenu": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FranchiseMenu"
+            },
+            "nullable": true
+          },
+          "sticky": {
+            "type": "string",
+            "nullable": true
+          },
+          "created": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FoodServicesOutletImage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "filemime": {
+            "type": "string",
+            "nullable": true
+          },
+          "filesize": {
+            "type": "string",
+            "nullable": true
+          },
+          "width": {
+            "type": "string",
+            "nullable": true
+          },
+          "height": {
+            "type": "string",
+            "nullable": true
+          },
+          "alt": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FoodServicesOutletPhoto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "filemime": {
+            "type": "string",
+            "nullable": true
+          },
+          "filesize": {
+            "type": "string",
+            "nullable": true
+          },
+          "width": {
+            "type": "string",
+            "nullable": true
+          },
+          "height": {
+            "type": "string",
+            "nullable": true
+          },
+          "alt": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FoodServicesOutlets": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FoodServicesOutlet"
+            },
+            "nullable": true
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "self": {
+            "$ref": "#/components/schemas/FoodServicesOutletsSelf"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FoodServicesOutletsSelf": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "href": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FranchiseMenu": {
+        "type": "object",
+        "properties": {
+          "vid": {
+            "type": "string",
+            "nullable": true
+          },
+          "uid": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "log": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          },
+          "promote": {
+            "type": "string",
+            "nullable": true
+          },
+          "sticky": {
+            "type": "string",
+            "nullable": true
+          },
+          "vuuid": {
+            "type": "string",
+            "nullable": true
+          },
+          "nid": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "language": {
+            "type": "string",
+            "nullable": true
+          },
+          "created": {
+            "type": "string",
+            "nullable": true
+          },
+          "changed": {
+            "type": "string",
+            "nullable": true
+          },
+          "tnid": {
+            "type": "string",
+            "nullable": true
+          },
+          "translate": {
+            "type": "string",
+            "nullable": true
+          },
+          "uuid": {
+            "type": "string",
+            "nullable": true
+          },
+          "revision_timestamp": {
+            "type": "string",
+            "nullable": true
+          },
+          "revision_uid": {
+            "type": "string",
+            "nullable": true
+          },
+          "field_addons": {
+            "nullable": true
+          },
+          "field_combos": {
+            "$ref": "#/components/schemas/Field_Combos"
+          },
+          "field_franchise_logo": {
+            "$ref": "#/components/schemas/Field_Franchise_Logo"
+          },
+          "field_individual_items": {
+            "nullable": true
+          },
+          "title_field": {
+            "$ref": "#/components/schemas/Title_Field"
+          },
+          "metatags": {
+            "$ref": "#/components/schemas/Metatags"
+          },
+          "rdf_mapping": {
+            "$ref": "#/components/schemas/Rdf_Mapping"
+          },
+          "path": {
+            "$ref": "#/components/schemas/Path"
+          },
+          "translations": {
+            "$ref": "#/components/schemas/Translations"
+          },
+          "title_original": {
+            "type": "string",
+            "nullable": true
+          },
+          "entity_translation_handler_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "title_language": {
+            "type": "string",
+            "nullable": true
+          },
+          "cid": {
+            "type": "string",
+            "nullable": true
+          },
+          "last_comment_timestamp": {
+            "type": "string",
+            "nullable": true
+          },
+          "last_comment_name": {
+            "nullable": true
+          },
+          "last_comment_uid": {
+            "type": "string",
+            "nullable": true
+          },
+          "comment_count": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "picture": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "string",
+            "nullable": true
+          },
+          "uw_page_settings_node_enable": {
+            "type": "string",
+            "nullable": true
+          },
+          "workbench_moderation": {
+            "$ref": "#/components/schemas/Workbench_Moderation"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Geometry": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Type of geometry",
+            "nullable": true,
+            "readOnly": true
+          },
+          "coordinates": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "Latitude and Longitude collection of this location",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Represents Geometry data of the Feature"
+      },
+      "HoursChange": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "value2": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timezone_db": {
+            "type": "string",
+            "nullable": true
+          },
+          "date_type": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportantDate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique, non-persistent Api Id for this resource",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name/Title of the Important Date",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional description of the Important Date, can contain markup",
+            "nullable": true
+          },
+          "importantDateType": {
+            "type": "string",
+            "description": "The type category this Important Date belongs to",
+            "nullable": true
+          },
+          "associatedAcademicYear": {
+            "type": "string",
+            "description": "The academic year this important date is associated to",
+            "nullable": true
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportantDateDetails"
+            },
+            "description": "Details about terms, dates, and special notes",
+            "nullable": true
+          },
+          "keywords": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Keywords associated with the Important Date",
+            "nullable": true
+          },
+          "audiences": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Audiences associated with the Important Date",
+            "nullable": true
+          },
+          "audienceString": {
+            "type": "string",
+            "nullable": true
+          },
+          "keywordString": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "An Important Date is an event at a time that has significance to the Waterloo community"
+      },
+      "ImportantDateDetails": {
+        "type": "object",
+        "properties": {
+          "importantDateId": {
+            "type": "integer",
+            "description": "Id link to associated Important Date, internal",
+            "format": "int32"
+          },
+          "termId": {
+            "type": "integer",
+            "description": "Id to the associated Term",
+            "format": "int32"
+          },
+          "termName": {
+            "type": "string",
+            "description": "Name of the associated Term when the Important Date takes place",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "description": "Start or event date for the Important Date",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "description": "Optional end date for the Important Date",
+            "format": "date-time",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "description": "Any special notes for this occurance of the Important Date, can contain markup",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Details about terms, dates, and special notes for an Important Date"
+      },
+      "IndividualItem": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "photo": {
+            "$ref": "#/components/schemas/IndividualItemPhoto"
+          },
+          "price": {
+            "type": "string",
+            "nullable": true
+          },
+          "calories": {
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "IndividualItemPhoto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "filemime": {
+            "type": "string",
+            "nullable": true
+          },
+          "filesize": {
+            "type": "string",
+            "nullable": true
+          },
+          "width": {
+            "type": "string",
+            "nullable": true
+          },
+          "height": {
+            "type": "string",
+            "nullable": true
+          },
+          "alt": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Last_Activity": {
+        "type": "object",
+        "properties": {
+          "predicates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "datatype": {
+            "type": "string",
+            "nullable": true
+          },
+          "callback": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Location": {
+        "type": "object",
+        "properties": {
+          "buildingId": {
+            "type": "string",
+            "description": "Unique identifier for this building",
+            "nullable": true
+          },
+          "buildingCode": {
+            "type": "string",
+            "description": "Alpha-numeric building code",
+            "nullable": true
+          },
+          "parentBuildingCode": {
+            "type": "string",
+            "description": "Unofficial, alpha-numeric building code that represents the parent location",
+            "nullable": true
+          },
+          "buildingName": {
+            "type": "string",
+            "description": "Display name of the building",
+            "nullable": true
+          },
+          "alternateBuildingNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Unofficial, collection of alternate building display names",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "description": "Latitude co-ordinate of this location",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "description": "Longitude co-ordinate of this location",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Model representing a Location for the Buildings dataset"
+      },
+      "LocationGeo": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Type property of GEO JSON collection",
+            "nullable": true,
+            "readOnly": true
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Feature"
+            },
+            "description": "Features of this collection",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Model representing a Location for the Buildings dataset in GEO JSON format"
+      },
+      "LocationLink": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "nullable": true
+          },
+          "attributes": {
+            "type": "array",
+            "items": { },
+            "nullable": true
+          },
+          "original_title": {
+            "nullable": true
+          },
+          "original_url": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Locpick": {
+        "type": "object",
+        "properties": {
+          "user_latitude": {
+            "type": "string",
+            "nullable": true
+          },
+          "user_longitude": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Logo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "filemime": {
+            "type": "string",
+            "nullable": true
+          },
+          "filesize": {
+            "type": "string",
+            "nullable": true
+          },
+          "width": {
+            "type": "string",
+            "nullable": true
+          },
+          "height": {
+            "type": "string",
+            "nullable": true
+          },
+          "alt": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Metatags": {
+        "type": "object",
+        "properties": {
+          "en": {
+            "$ref": "#/components/schemas/En1"
+          }
+        },
+        "additionalProperties": false
+      },
+      "My_Revision": {
+        "type": "object",
+        "properties": {
+          "hid": {
+            "type": "string",
+            "nullable": true
+          },
+          "vid": {
+            "type": "string",
+            "nullable": true
+          },
+          "nid": {
+            "type": "string",
+            "nullable": true
+          },
+          "from_state": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "uid": {
+            "type": "string",
+            "nullable": true
+          },
+          "stamp": {
+            "type": "string",
+            "nullable": true
+          },
+          "published": {
+            "type": "string",
+            "nullable": true
+          },
+          "is_current": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "timestamp": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Name": {
+        "type": "object",
+        "properties": {
+          "predicates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OpeningHour": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "nullable": true
+          },
+          "starthours": {
+            "type": "string",
+            "nullable": true
+          },
+          "endhours": {
+            "type": "string",
+            "nullable": true
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OutletLocation": {
+        "type": "object",
+        "properties": {
+          "lid": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "street": {
+            "type": "string",
+            "nullable": true
+          },
+          "additional": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "province": {
+            "type": "string",
+            "nullable": true
+          },
+          "postal_code": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "string",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "string",
+            "nullable": true
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "is_primary": {
+            "type": "string",
+            "nullable": true
+          },
+          "locpick": {
+            "$ref": "#/components/schemas/Locpick"
+          },
+          "province_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "country_name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OutletType": {
+        "type": "object",
+        "properties": {
+          "tid": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PaidHoliday": {
+        "type": "object",
+        "properties": {
+          "holidayDate": {
+            "type": "string",
+            "description": "Date of the paid holiday event",
+            "format": "date-time"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the paid holiday",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data object representing a University of Waterloo paid holiday"
+      },
+      "Path": {
+        "type": "object",
+        "properties": {
+          "pid": {
+            "type": "string",
+            "nullable": true
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "alias": {
+            "type": "string",
+            "nullable": true
+          },
+          "language": {
+            "type": "string",
+            "nullable": true
+          },
+          "pathauto": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PaymentAccepted": {
+        "type": "object",
+        "properties": {
+          "tid": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Published": {
+        "type": "object",
+        "properties": {
+          "hid": {
+            "type": "string",
+            "nullable": true
+          },
+          "vid": {
+            "type": "string",
+            "nullable": true
+          },
+          "nid": {
+            "type": "string",
+            "nullable": true
+          },
+          "from_state": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "uid": {
+            "type": "string",
+            "nullable": true
+          },
+          "stamp": {
+            "type": "string",
+            "nullable": true
+          },
+          "published": {
+            "type": "string",
+            "nullable": true
+          },
+          "is_current": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "timestamp": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Rdf_Mapping": {
+        "type": "object",
+        "properties": {
+          "rdftype": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "title": {
+            "$ref": "#/components/schemas/Title"
+          },
+          "created": {
+            "$ref": "#/components/schemas/Created"
+          },
+          "changed": {
+            "$ref": "#/components/schemas/Changed"
+          },
+          "body": {
+            "$ref": "#/components/schemas/Body"
+          },
+          "uid": {
+            "$ref": "#/components/schemas/Uid"
+          },
+          "name": {
+            "$ref": "#/components/schemas/Name"
+          },
+          "comment_count": {
+            "$ref": "#/components/schemas/Comment_Count"
+          },
+          "last_activity": {
+            "$ref": "#/components/schemas/Last_Activity"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Robots": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Value"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Site": {
+        "type": "object",
+        "properties": {
+          "siteId": {
+            "type": "integer",
+            "description": "Unique, numeric site ID",
+            "format": "int32"
+          },
+          "relativeUri": {
+            "type": "string",
+            "description": "Relative URI of the site from the root uWaterloo CMS domain",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the Site",
+            "nullable": true
+          },
+          "completeUri": {
+            "type": "string",
+            "description": "Complete URI of the site, including root domain",
+            "nullable": true
+          },
+          "ownerUnitCode": {
+            "type": "string",
+            "description": "If available, the department owner code for this Site. Can loosely map to Academic Groups.",
+            "nullable": true
+          },
+          "ownerUnitNameShort": {
+            "type": "string",
+            "description": "Short name of the department owner for this Site. See OwnerUnitCode for more.",
+            "nullable": true
+          },
+          "ownerUnitNameFull": {
+            "type": "string",
+            "description": "Full name of the department owner for this Site. See OwnerUnitCode for more.",
+            "nullable": true
+          },
+          "ownerGroupCode": {
+            "type": "string",
+            "description": "If available, the faculty owner code for this Site. Can loosely map to Academic Organization.",
+            "nullable": true
+          },
+          "ownerType": {
+            "type": "string",
+            "description": "The tag describing the association of the owner department, such as academic, research, and more.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Model representing a Site on the Waterloo CMS"
+      },
+      "SiteBlogPost": {
+        "type": "object",
+        "properties": {
+          "siteId": {
+            "type": "integer",
+            "description": "Unique, numeric site ID",
+            "format": "int32"
+          },
+          "uniqueKey": {
+            "type": "string",
+            "description": "Unique Id of this post item",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the blog post",
+            "nullable": true
+          },
+          "postedDate": {
+            "type": "string",
+            "description": "Content created or posted date",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedDate": {
+            "type": "string",
+            "description": "Content updated date",
+            "format": "date-time",
+            "nullable": true
+          },
+          "itemUri": {
+            "type": "string",
+            "description": "URI to the item in WCMS",
+            "nullable": true
+          },
+          "audience": {
+            "type": "string",
+            "description": "Intended audience tag(s)",
+            "nullable": true
+          },
+          "content": {
+            "type": "string",
+            "description": "Blog post content, often with HTML markup",
+            "nullable": true
+          },
+          "delegatedAuthorName": {
+            "type": "string",
+            "description": "Display name of the delegated author for this blog post",
+            "nullable": true
+          },
+          "delegatedAuthorUri": {
+            "type": "string",
+            "description": "Link to the WCMS profiel of the delegated author",
+            "nullable": true
+          },
+          "publisherUsername": {
+            "type": "string",
+            "description": "Username of the person publishing the content, not necessarily the author",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Model representing a WCMS blog post item"
+      },
+      "SiteEvent": {
+        "type": "object",
+        "properties": {
+          "siteId": {
+            "type": "integer",
+            "description": "Unique, numeric site ID",
+            "format": "int32"
+          },
+          "uniqueKey": {
+            "type": "string",
+            "description": "Unique Id of this evevnt item",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the event",
+            "nullable": true
+          },
+          "eventStartDate": {
+            "type": "string",
+            "description": "Start date of the event",
+            "format": "date-time",
+            "nullable": true
+          },
+          "eventEndDate": {
+            "type": "string",
+            "description": "End date of the event",
+            "format": "date-time",
+            "nullable": true
+          },
+          "recurRule": {
+            "type": "string",
+            "description": "Description of the event recurrence rule",
+            "nullable": true
+          },
+          "eventTimezone": {
+            "type": "string",
+            "description": "Time zone description of the event dates",
+            "nullable": true
+          },
+          "itemUri": {
+            "type": "string",
+            "description": "Link to the Event",
+            "nullable": true
+          },
+          "eventTags": {
+            "type": "string",
+            "description": "Tag(s) representing the event",
+            "nullable": true
+          },
+          "eventType": {
+            "type": "string",
+            "description": "Type of the event",
+            "nullable": true
+          },
+          "eventWebsite": {
+            "type": "string",
+            "description": "Supplemental URI for the event",
+            "nullable": true
+          },
+          "audience": {
+            "type": "string",
+            "description": "Tag(s) representing the intended audience for the event",
+            "nullable": true
+          },
+          "cost": {
+            "type": "string",
+            "description": "Cost of the event",
+            "nullable": true
+          },
+          "host": {
+            "type": "string",
+            "description": "Event host information",
+            "nullable": true
+          },
+          "locationId": {
+            "type": "integer",
+            "description": "Unique Id of the location hosting the event",
+            "format": "int32",
+            "nullable": true
+          },
+          "locationName": {
+            "type": "string",
+            "description": "Display name of the location hosting the event",
+            "nullable": true
+          },
+          "updatedDate": {
+            "type": "string",
+            "description": "Date item last updated",
+            "format": "date-time",
+            "nullable": true
+          },
+          "content": {
+            "type": "string",
+            "description": "Description content for the event, often includes HTML markup",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Model representing a WCMS Event item"
+      },
+      "SiteNews": {
+        "type": "object",
+        "properties": {
+          "siteId": {
+            "type": "integer",
+            "description": "Unique, numeric site ID of the Site this news originates from",
+            "format": "int32"
+          },
+          "uniqueKey": {
+            "type": "string",
+            "description": "Unique Id of this news item",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the news item",
+            "nullable": true
+          },
+          "postedDate": {
+            "type": "string",
+            "description": "Content created or posted date",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedDate": {
+            "type": "string",
+            "description": "Content updated date",
+            "format": "date-time",
+            "nullable": true
+          },
+          "itemUri": {
+            "type": "string",
+            "description": "URI to the news item in WCMS",
+            "nullable": true
+          },
+          "audience": {
+            "type": "string",
+            "description": "Intended audience tag(s)",
+            "nullable": true
+          },
+          "content": {
+            "type": "string",
+            "description": "News item content, often with HTML markup",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Model representing News data associated to a Site in the WCMS"
+      },
+      "Subject": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Code that identifies this Subject",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "description": "The Name for this Subject, most often the displayed name",
+            "nullable": true
+          },
+          "descriptionAbbreviated": {
+            "type": "string",
+            "description": "The short description of this subject, often same as Code",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the Subject",
+            "nullable": true
+          },
+          "associatedAcademicOrgCode": {
+            "type": "string",
+            "description": "Code for the Academic Organization that is associated to this Subject",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "An academic Subject at Waterloo describes an area that a Course can be in"
+      },
+      "Term": {
+        "type": "object",
+        "properties": {
+          "termCode": {
+            "type": "string",
+            "description": "Code that describes this Term",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "description": "The Name for this Term, most often the displayed name",
+            "nullable": true
+          },
+          "nameShort": {
+            "type": "string",
+            "description": "The short form name for this Term",
+            "nullable": true
+          },
+          "termBeginDate": {
+            "type": "string",
+            "description": "The date and time from which the Term begins, inclusive",
+            "format": "date-time"
+          },
+          "termEndDate": {
+            "type": "string",
+            "description": "The date and time on which the Term ends, inclusive",
+            "format": "date-time"
+          },
+          "sixtyPercentCompleteDate": {
+            "type": "string",
+            "description": "The date and time at which the term is 60% complete, used for standing, withdrawal, and penalties",
+            "format": "date-time",
+            "nullable": true
+          },
+          "associatedAcademicYear": {
+            "type": "integer",
+            "description": "The academic year to which this Term belongs",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "An academic Term at Waterloo, a defined period of time that is used by classes and similar"
+      },
+      "Title": {
+        "type": "object",
+        "properties": {
+          "predicates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Title_Field": {
+        "type": "object",
+        "properties": {
+          "en": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/En"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Translations": {
+        "type": "object",
+        "properties": {
+          "original": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/Data"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Uid": {
+        "type": "object",
+        "properties": {
+          "predicates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Und": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "nullable": true
+          },
+          "revision_id": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Und1": {
+        "type": "object",
+        "properties": {
+          "fid": {
+            "type": "string",
+            "nullable": true
+          },
+          "uid": {
+            "type": "string",
+            "nullable": true
+          },
+          "filename": {
+            "type": "string",
+            "nullable": true
+          },
+          "uri": {
+            "type": "string",
+            "nullable": true
+          },
+          "filemime": {
+            "type": "string",
+            "nullable": true
+          },
+          "filesize": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "timestamp": {
+            "type": "string",
+            "nullable": true
+          },
+          "uuid": {
+            "type": "string",
+            "nullable": true
+          },
+          "rdf_mapping": {
+            "type": "array",
+            "items": { },
+            "nullable": true
+          },
+          "focal_point": {
+            "type": "string",
+            "nullable": true
+          },
+          "alt": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "width": {
+            "type": "string",
+            "nullable": true
+          },
+          "height": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Value": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "follow": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "noindex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nofollow": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "noarchive": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nosnippet": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "noodp": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "noydir": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "noimageindex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "notranslate": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Workbench_Moderation": {
+        "type": "object",
+        "properties": {
+          "current": {
+            "$ref": "#/components/schemas/Current"
+          },
+          "published": {
+            "$ref": "#/components/schemas/Published"
+          },
+          "my_revision": {
+            "$ref": "#/components/schemas/My_Revision"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "apiKey": {
+        "type": "apiKey",
+        "description": "Custom API key authentication",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    }
+  },
+  "security": [
+    {
+      "apiKey": [ ]
+    }
+  ]
+}
