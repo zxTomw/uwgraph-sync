@@ -34,6 +34,8 @@ Optional:
 
 ## Run
 
+For local development, create a `.env` file using `.env.example` as the template. The binary loads `.env` automatically if it exists. Existing environment variables take precedence over values in `.env`.
+
 ```sh
 go run ./cmd/uwgraph
 ```

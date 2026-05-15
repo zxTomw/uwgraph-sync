@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/joho/godotenv"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 
 	"uwgraph/internal/config"
@@ -18,6 +19,10 @@ import (
 
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+
+	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
+		logger.Warn("load .env", "error", err)
+	}
 
 	cfg, err := config.Load()
 	if err != nil {
