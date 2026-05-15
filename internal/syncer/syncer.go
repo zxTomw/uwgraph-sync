@@ -48,43 +48,47 @@ func (s *Service) Sync(ctx context.Context) error {
 
 	terms, err := s.client.Terms(ctx)
 	if err != nil {
-		return err
+		s.warnAPIFailure("terms", "", "", err)
+	} else {
+		termCount, err := s.store.UpsertTerms(ctx, terms)
+		if err != nil {
+			return err
+		}
+		s.logger.Info("synced terms", "fetched", len(terms), "written", termCount)
 	}
-	termCount, err := s.store.UpsertTerms(ctx, terms)
-	if err != nil {
-		return err
-	}
-	s.logger.Info("synced terms", "fetched", len(terms), "written", termCount)
 
 	orgs, err := s.client.AcademicOrganizations(ctx)
 	if err != nil {
-		return err
+		s.warnAPIFailure("academic organizations", "", "", err)
+	} else {
+		orgCount, err := s.store.UpsertAcademicOrganizations(ctx, orgs)
+		if err != nil {
+			return err
+		}
+		s.logger.Info("synced academic organizations", "fetched", len(orgs), "written", orgCount)
 	}
-	orgCount, err := s.store.UpsertAcademicOrganizations(ctx, orgs)
-	if err != nil {
-		return err
-	}
-	s.logger.Info("synced academic organizations", "fetched", len(orgs), "written", orgCount)
 
 	subjects, err := s.client.Subjects(ctx)
 	if err != nil {
-		return err
+		s.warnAPIFailure("subjects", "", "", err)
+	} else {
+		subjectCount, err := s.store.UpsertSubjects(ctx, subjects)
+		if err != nil {
+			return err
+		}
+		s.logger.Info("synced subjects", "fetched", len(subjects), "written", subjectCount)
 	}
-	subjectCount, err := s.store.UpsertSubjects(ctx, subjects)
-	if err != nil {
-		return err
-	}
-	s.logger.Info("synced subjects", "fetched", len(subjects), "written", subjectCount)
 
 	locations, err := s.client.Locations(ctx)
 	if err != nil {
-		return err
+		s.warnAPIFailure("locations", "", "", err)
+	} else {
+		locationCount, err := s.store.UpsertLocations(ctx, locations)
+		if err != nil {
+			return err
+		}
+		s.logger.Info("synced locations", "fetched", len(locations), "written", locationCount)
 	}
-	locationCount, err := s.store.UpsertLocations(ctx, locations)
-	if err != nil {
-		return err
-	}
-	s.logger.Info("synced locations", "fetched", len(locations), "written", locationCount)
 
 	for _, termCode := range s.termCodes {
 		if err := s.syncTerm(ctx, termCode); err != nil {
@@ -99,40 +103,55 @@ func (s *Service) Sync(ctx context.Context) error {
 func (s *Service) syncTerm(ctx context.Context, termCode string) error {
 	courses, err := s.client.Courses(ctx, termCode)
 	if err != nil {
-		return err
+		s.warnAPIFailure("courses", termCode, "", err)
+	} else {
+		courseCount, err := s.store.UpsertCourses(ctx, courses)
+		if err != nil {
+			return err
+		}
+		s.logger.Info("synced courses", "termCode", termCode, "fetched", len(courses), "written", courseCount)
 	}
-	courseCount, err := s.store.UpsertCourses(ctx, courses)
-	if err != nil {
-		return err
-	}
-	s.logger.Info("synced courses", "termCode", termCode, "fetched", len(courses), "written", courseCount)
 
 	courseIDs, err := s.client.ScheduledCourseIDs(ctx, termCode)
 	if err != nil {
-		return err
-	}
-	s.logger.Info("fetched scheduled course ids", "termCode", termCode, "count", len(courseIDs))
+		s.warnAPIFailure("scheduled course ids", termCode, "", err)
+	} else {
+		s.logger.Info("fetched scheduled course ids", "termCode", termCode, "count", len(courseIDs))
 
-	for _, courseID := range courseIDs {
-		classes, err := s.client.Classes(ctx, termCode, courseID)
-		if err != nil {
-			return err
+		for _, courseID := range courseIDs {
+			classes, err := s.client.Classes(ctx, termCode, courseID)
+			if err != nil {
+				s.warnAPIFailure("classes", termCode, courseID, err)
+				continue
+			}
+			sectionCount, meetingCount, err := s.store.UpsertClasses(ctx, classes)
+			if err != nil {
+				return err
+			}
+			s.logger.Info("synced classes", "termCode", termCode, "courseId", courseID, "fetched", len(classes), "sections", sectionCount, "meetings", meetingCount)
 		}
-		sectionCount, meetingCount, err := s.store.UpsertClasses(ctx, classes)
-		if err != nil {
-			return err
-		}
-		s.logger.Info("synced classes", "termCode", termCode, "courseId", courseID, "fetched", len(classes), "sections", sectionCount, "meetings", meetingCount)
 	}
 
 	exams, err := s.client.Exams(ctx, termCode)
 	if err != nil {
-		return err
+		s.warnAPIFailure("exams", termCode, "", err)
+	} else {
+		examCount, err := s.store.UpsertExams(ctx, exams)
+		if err != nil {
+			return err
+		}
+		s.logger.Info("synced exams", "termCode", termCode, "fetched", len(exams), "written", examCount)
 	}
-	examCount, err := s.store.UpsertExams(ctx, exams)
-	if err != nil {
-		return err
-	}
-	s.logger.Info("synced exams", "termCode", termCode, "fetched", len(exams), "written", examCount)
 	return nil
+}
+
+func (s *Service) warnAPIFailure(dataset, termCode, courseID string, err error) {
+	attrs := []any{"dataset", dataset, "error", err}
+	if termCode != "" {
+		attrs = append(attrs, "termCode", termCode)
+	}
+	if courseID != "" {
+		attrs = append(attrs, "courseId", courseID)
+	}
+	s.logger.Warn("skipped waterloo api request", attrs...)
 }
