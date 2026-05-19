@@ -1,6 +1,6 @@
-# uwgraph
+# UW Graph - Sync
 
-Binary-only Go service that periodically syncs selected University of Waterloo OpenData API v3 academic data into Neo4j.
+Go service that periodically syncs University of Waterloo academic data (courses, schedules, terms, etc.) into Neo4j.
 
 ## Data Ingested
 
