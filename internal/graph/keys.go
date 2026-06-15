@@ -2,6 +2,7 @@ package graph
 
 import (
 	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"strconv"
@@ -50,4 +51,13 @@ func ExamKey(termCode, displayName, sections, startDate, startTime string) strin
 	}
 	sum := sha1.Sum([]byte(strings.Join(parts, "|")))
 	return "exam:" + hex.EncodeToString(sum[:])
+}
+
+func InstructorKey(uniqueIdentifier string) string {
+	identifier := strings.TrimSpace(uniqueIdentifier)
+	if identifier == "" {
+		return ""
+	}
+	sum := sha256.Sum256([]byte(identifier))
+	return "instructor:" + hex.EncodeToString(sum[:])
 }
