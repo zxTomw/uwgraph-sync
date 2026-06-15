@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Verify module files
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+      - name: Test
+        run: go test -race -shuffle=on ./...
+      - name: Vet
+        run: go vet ./...
+
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      WATERLOO_API_KEY: ci-placeholder
+      NEO4J_USERNAME: neo4j
+      NEO4J_PASSWORD: ci-password
+      UWGRAPH_TERM_CODES: "1265"
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
+      - uses: docker/setup-buildx-action@v4
+      - name: Build production image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: runtime
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Run Neo4j integration test
+        run: >-
+          docker compose -p uwgraph-sync-test --profile test up --build
+          --abort-on-container-exit
+          --exit-code-from integration-test
+          integration-test
+      - name: Stop containers
+        if: always()
+        run: docker compose -p uwgraph-sync-test --profile test down --volumes

@@ -15,14 +15,16 @@ const (
 	defaultSyncInterval    = 6 * time.Hour
 	defaultHTTPTimeout     = 30 * time.Second
 	defaultSyncTimeout     = 30 * time.Minute
+	defaultStartupTimeout  = 2 * time.Minute
 )
 
 type Config struct {
-	Waterloo     WaterlooConfig
-	Neo4J        Neo4JConfig
-	TermCodes    []string
-	SyncInterval time.Duration
-	SyncTimeout  time.Duration
+	Waterloo       WaterlooConfig
+	Neo4J          Neo4JConfig
+	TermCodes      []string
+	SyncInterval   time.Duration
+	SyncTimeout    time.Duration
+	StartupTimeout time.Duration
 }
 
 type WaterlooConfig struct {
@@ -62,6 +64,7 @@ func LoadFromEnv(lookup func(string) (string, bool)) (Config, error) {
 
 	cfg.SyncInterval = durationOrDefault(lookup, "UWGRAPH_SYNC_INTERVAL", defaultSyncInterval, &problems)
 	cfg.SyncTimeout = durationOrDefault(lookup, "UWGRAPH_SYNC_TIMEOUT", defaultSyncTimeout, &problems)
+	cfg.StartupTimeout = durationOrDefault(lookup, "UWGRAPH_STARTUP_TIMEOUT", defaultStartupTimeout, &problems)
 
 	if len(problems) > 0 {
 		return Config{}, errors.Join(problems...)

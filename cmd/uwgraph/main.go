@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 
 	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
 		logger.Warn("load .env", "error", err)
@@ -47,7 +47,7 @@ func main() {
 		}
 	}()
 
-	if err := driver.VerifyConnectivity(ctx); err != nil {
+	if err := neo4jstore.WaitForConnectivity(ctx, driver, cfg.StartupTimeout, logger); err != nil {
 		logger.Error("verify neo4j connectivity", "error", err)
 		os.Exit(1)
 	}

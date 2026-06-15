@@ -14,42 +14,62 @@ Go service that periodically syncs University of Waterloo academic data (courses
 
 Important dates, holidays, food services, and WCMS content are intentionally not fetched in v1.
 
+## Quick Start
+
+Docker Compose is the primary development workflow. It builds the Go worker,
+starts Neo4j, waits for the database to become healthy, and persists graph data
+in a named volume.
+
+```sh
+cp .env.example .env
+# Set WATERLOO_API_KEY and adjust the development password in .env.
+make up
+```
+
+Neo4j Browser is available at `http://localhost:7474`. Stop the stack with
+`Ctrl+C` or `make down`. Remove persisted database data with
+`docker compose down --volumes`.
+
+The service runs one sync immediately, then repeats on
+`UWGRAPH_SYNC_INTERVAL`. A tick is skipped when the previous sync is still
+running.
+
 ## Configuration
 
-Required:
+Required values:
 
 - `WATERLOO_API_KEY`
 - `NEO4J_USERNAME`
 - `NEO4J_PASSWORD`
 - `UWGRAPH_TERM_CODES`, comma-separated, for example `1251,1255`
 
-Optional:
+Optional values and defaults are documented in `.env.example`. Notable runtime
+settings include `UWGRAPH_SYNC_INTERVAL=6h`, `UWGRAPH_SYNC_TIMEOUT=30m`, and
+`UWGRAPH_STARTUP_TIMEOUT=2m`. Existing environment variables take precedence
+over values loaded from `.env`.
 
-- `WATERLOO_BASE_URL`, default `https://openapi.data.uwaterloo.ca`
-- `NEO4J_URI`, default `bolt://localhost:7687`
-- `NEO4J_DATABASE`, default `neo4j`
-- `UWGRAPH_SYNC_INTERVAL`, default `6h`
-- `UWGRAPH_HTTP_TIMEOUT`, default `30s`
-- `UWGRAPH_SYNC_TIMEOUT`, default `30m`
+## Development Commands
 
-## Run
+```sh
+make up                # Build and run the complete stack
+make logs              # Follow app and Neo4j logs
+make build             # Build the production image
+make test              # Run unit tests with race detection
+make integration-test  # Run tagged tests against Compose Neo4j
+make check             # Run formatting, vet, tests, and Compose validation
+```
 
-For local development, create a `.env` file using `.env.example` as the template. The binary loads `.env` automatically if it exists. Existing environment variables take precedence over values in `.env`.
+For direct host debugging, start Neo4j separately and run:
 
 ```sh
 go run ./cmd/uwgraph
 ```
 
-The service runs one sync immediately, then repeats on `UWGRAPH_SYNC_INTERVAL`. If a sync is still running when the next interval arrives, that tick is skipped and logged.
+The binary loads `.env` automatically and logs structured JSON to stdout.
 
-## Test
+## Container Design
 
-```sh
-go test ./...
-```
-
-Neo4j integration tests are opt-in:
-
-```sh
-go test -tags=integration ./internal/neo4jstore
-```
+The production image uses a multi-stage Go build and a `scratch` runtime. It
+contains only the statically linked worker binary and CA certificates, runs as
+non-root user `65532`, and exposes no port because the process is a scheduled
+worker rather than an HTTP service.

@@ -31,6 +31,9 @@ func TestLoadFromEnvParsesDefaultsAndTermCodes(t *testing.T) {
 	if cfg.SyncInterval != 6*time.Hour {
 		t.Fatalf("SyncInterval = %s, want 6h", cfg.SyncInterval)
 	}
+	if cfg.StartupTimeout != 2*time.Minute {
+		t.Fatalf("StartupTimeout = %s, want 2m", cfg.StartupTimeout)
+	}
 }
 
 func TestLoadFromEnvRejectsMissingRequiredValues(t *testing.T) {
@@ -48,19 +51,24 @@ func TestLoadFromEnvRejectsMissingRequiredValues(t *testing.T) {
 
 func TestLoadFromEnvRejectsInvalidDurations(t *testing.T) {
 	env := map[string]string{
-		"WATERLOO_API_KEY":      "waterloo-key",
-		"NEO4J_USERNAME":        "neo4j",
-		"NEO4J_PASSWORD":        "password",
-		"UWGRAPH_TERM_CODES":    "1251",
-		"UWGRAPH_SYNC_INTERVAL": "soon",
-		"UWGRAPH_SYNC_TIMEOUT":  "0s",
+		"WATERLOO_API_KEY":        "waterloo-key",
+		"NEO4J_USERNAME":          "neo4j",
+		"NEO4J_PASSWORD":          "password",
+		"UWGRAPH_TERM_CODES":      "1251",
+		"UWGRAPH_SYNC_INTERVAL":   "soon",
+		"UWGRAPH_SYNC_TIMEOUT":    "0s",
+		"UWGRAPH_STARTUP_TIMEOUT": "-1s",
 	}
 
 	_, err := LoadFromEnv(mapLookup(env))
 	if err == nil {
 		t.Fatal("LoadFromEnv returned nil error")
 	}
-	for _, want := range []string{"UWGRAPH_SYNC_INTERVAL must be a valid duration", "UWGRAPH_SYNC_TIMEOUT must be greater than zero"} {
+	for _, want := range []string{
+		"UWGRAPH_SYNC_INTERVAL must be a valid duration",
+		"UWGRAPH_SYNC_TIMEOUT must be greater than zero",
+		"UWGRAPH_STARTUP_TIMEOUT must be greater than zero",
+	} {
 		if !strings.Contains(err.Error(), want) {
 			t.Fatalf("error %q does not contain %q", err.Error(), want)
 		}
