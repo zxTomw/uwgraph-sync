@@ -41,3 +41,19 @@ func TestExamKeyIsStableHash(t *testing.T) {
 		t.Fatalf("ExamKey length = %d, want %d", len(first), len("exam:")+40)
 	}
 }
+
+func TestInstructorKeyDoesNotExposeIdentifier(t *testing.T) {
+	key := InstructorKey("private-identifier")
+	if key == "" {
+		t.Fatal("InstructorKey returned an empty key")
+	}
+	if key == "private-identifier" {
+		t.Fatal("InstructorKey exposed the upstream identifier")
+	}
+	if got := InstructorKey(" private-identifier "); got != key {
+		t.Fatalf("trimmed InstructorKey = %q, want %q", got, key)
+	}
+	if got := InstructorKey(" "); got != "" {
+		t.Fatalf("empty InstructorKey = %q, want empty", got)
+	}
+}

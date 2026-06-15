@@ -1,5 +1,33 @@
 name: uwgraph-sync
 
+x-uwgraph-service: &uwgraph-service
+  image: "${UWGRAPH_IMAGE:-uwgraph-sync:local}"
+  build:
+    context: .
+    target: runtime
+  depends_on:
+    neo4j:
+      condition: service_healthy
+      restart: true
+  restart: unless-stopped
+  stop_grace_period: 30s
+
+x-neo4j-environment: &neo4j-environment
+  NEO4J_URI: "bolt://neo4j:7687"
+  NEO4J_USERNAME: "${NEO4J_USERNAME:-neo4j}"
+  NEO4J_PASSWORD: "${NEO4J_PASSWORD:?NEO4J_PASSWORD must be set}"
+  NEO4J_DATABASE: "${NEO4J_DATABASE:-neo4j}"
+  UWGRAPH_STARTUP_TIMEOUT: "${UWGRAPH_STARTUP_TIMEOUT:-2m}"
+
+x-embedding-environment: &embedding-environment
+  UWGRAPH_EMBEDDING_BASE_URL: "${UWGRAPH_EMBEDDING_BASE_URL:-https://api.openai.com/v1}"
+  UWGRAPH_EMBEDDING_API_KEY: "${UWGRAPH_EMBEDDING_API_KEY:?UWGRAPH_EMBEDDING_API_KEY must be set}"
+  UWGRAPH_EMBEDDING_MODEL: "${UWGRAPH_EMBEDDING_MODEL:?UWGRAPH_EMBEDDING_MODEL must be set}"
+  UWGRAPH_EMBEDDING_DIMENSIONS: "${UWGRAPH_EMBEDDING_DIMENSIONS:?UWGRAPH_EMBEDDING_DIMENSIONS must be set}"
+  UWGRAPH_EMBEDDING_BATCH_SIZE: "${UWGRAPH_EMBEDDING_BATCH_SIZE:-64}"
+  UWGRAPH_EMBEDDING_TIMEOUT: "${UWGRAPH_EMBEDDING_TIMEOUT:-30s}"
+  UWGRAPH_EMBEDDING_POLL_INTERVAL: "${UWGRAPH_EMBEDDING_POLL_INTERVAL:-1m}"
+
 services:
   neo4j:
     image: neo4j:2026.05.0
@@ -24,28 +52,34 @@ services:
       start_period: 20s
     restart: unless-stopped
 
-  app:
-    build:
-      context: .
-      target: runtime
+  sync:
+    <<: *uwgraph-service
     environment:
+      <<: *neo4j-environment
       WATERLOO_API_KEY: "${WATERLOO_API_KEY:?WATERLOO_API_KEY must be set}"
       WATERLOO_BASE_URL: "${WATERLOO_BASE_URL:-https://openapi.data.uwaterloo.ca}"
-      NEO4J_URI: "bolt://neo4j:7687"
-      NEO4J_USERNAME: "${NEO4J_USERNAME:-neo4j}"
-      NEO4J_PASSWORD: "${NEO4J_PASSWORD:?NEO4J_PASSWORD must be set}"
-      NEO4J_DATABASE: "${NEO4J_DATABASE:-neo4j}"
       UWGRAPH_TERM_CODES: "${UWGRAPH_TERM_CODES:?UWGRAPH_TERM_CODES must be set}"
       UWGRAPH_SYNC_INTERVAL: "${UWGRAPH_SYNC_INTERVAL:-6h}"
       UWGRAPH_HTTP_TIMEOUT: "${UWGRAPH_HTTP_TIMEOUT:-30s}"
       UWGRAPH_SYNC_TIMEOUT: "${UWGRAPH_SYNC_TIMEOUT:-30m}"
-      UWGRAPH_STARTUP_TIMEOUT: "${UWGRAPH_STARTUP_TIMEOUT:-2m}"
-    depends_on:
-      neo4j:
-        condition: service_healthy
-        restart: true
-    restart: unless-stopped
-    stop_grace_period: 30s
+
+  embed:
+    <<: *uwgraph-service
+    entrypoint: ["/uwgraph-embed"]
+    environment:
+      <<: [*neo4j-environment, *embedding-environment]
+
+  serve:
+    <<: *uwgraph-service
+    entrypoint: ["/uwgraph-serve"]
+    environment:
+      <<: [*neo4j-environment, *embedding-environment]
+      UWGRAPH_KNOWLEDGE_ADDRESS: ":8080"
+      UWGRAPH_KNOWLEDGE_API_KEY: "${UWGRAPH_KNOWLEDGE_API_KEY:?UWGRAPH_KNOWLEDGE_API_KEY must be set}"
+      UWGRAPH_KNOWLEDGE_QUERY_TIMEOUT: "${UWGRAPH_KNOWLEDGE_QUERY_TIMEOUT:-15s}"
+      UWGRAPH_MCP_ALLOWED_ORIGINS: "${UWGRAPH_MCP_ALLOWED_ORIGINS:-}"
+    ports:
+      - "127.0.0.1:${UWGRAPH_KNOWLEDGE_PORT:-8080}:8080"
 
   integration-test:
     profiles: ["test"]
@@ -53,10 +87,7 @@ services:
       context: .
       target: build
     environment:
-      NEO4J_URI: "bolt://neo4j:7687"
-      NEO4J_USERNAME: "${NEO4J_USERNAME:-neo4j}"
-      NEO4J_PASSWORD: "${NEO4J_PASSWORD:?NEO4J_PASSWORD must be set}"
-      NEO4J_DATABASE: "${NEO4J_DATABASE:-neo4j}"
+      <<: *neo4j-environment
     depends_on:
       neo4j:
         condition: service_healthy

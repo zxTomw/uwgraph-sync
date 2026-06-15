@@ -75,6 +75,52 @@ func TestLoadFromEnvRejectsInvalidDurations(t *testing.T) {
 	}
 }
 
+func TestLoadEmbedFromEnvRequiresEmbeddingSettings(t *testing.T) {
+	env := map[string]string{
+		"NEO4J_USERNAME": "neo4j",
+		"NEO4J_PASSWORD": "password",
+	}
+	_, err := LoadEmbedFromEnv(mapLookup(env))
+	if err == nil {
+		t.Fatal("LoadEmbedFromEnv returned nil error")
+	}
+	for _, want := range []string{
+		"UWGRAPH_EMBEDDING_API_KEY is required",
+		"UWGRAPH_EMBEDDING_MODEL is required",
+		"UWGRAPH_EMBEDDING_DIMENSIONS is required",
+	} {
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("error %q does not contain %q", err.Error(), want)
+		}
+	}
+}
+
+func TestLoadServeFromEnvParsesKnowledgeSettings(t *testing.T) {
+	env := map[string]string{
+		"NEO4J_USERNAME":                  "neo4j",
+		"NEO4J_PASSWORD":                  "password",
+		"UWGRAPH_EMBEDDING_API_KEY":       "embedding-key",
+		"UWGRAPH_EMBEDDING_MODEL":         "embedding-model",
+		"UWGRAPH_EMBEDDING_DIMENSIONS":    "256",
+		"UWGRAPH_KNOWLEDGE_API_KEY":       "knowledge-key",
+		"UWGRAPH_MCP_ALLOWED_ORIGINS":     "https://one.example, https://two.example",
+		"UWGRAPH_KNOWLEDGE_QUERY_TIMEOUT": "20s",
+	}
+	cfg, err := LoadServeFromEnv(mapLookup(env))
+	if err != nil {
+		t.Fatalf("LoadServeFromEnv returned error: %v", err)
+	}
+	if cfg.Embedding.Dimensions != 256 {
+		t.Fatalf("Dimensions = %d, want 256", cfg.Embedding.Dimensions)
+	}
+	if got, want := strings.Join(cfg.MCPAllowedOrigins, ","), "https://one.example,https://two.example"; got != want {
+		t.Fatalf("MCPAllowedOrigins = %q, want %q", got, want)
+	}
+	if cfg.QueryTimeout != 20*time.Second {
+		t.Fatalf("QueryTimeout = %s, want 20s", cfg.QueryTimeout)
+	}
+}
+
 func mapLookup(values map[string]string) func(string) (string, bool) {
 	return func(key string) (string, bool) {
 		value, ok := values[key]

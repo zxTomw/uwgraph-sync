@@ -2,11 +2,15 @@ package neo4jstore
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"net/url"
+	"time"
 
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 
 	"uwgraph/internal/graph"
+	"uwgraph/internal/knowledge"
 	"uwgraph/internal/waterloo"
 )
 
@@ -33,8 +37,11 @@ func (s *Store) EnsureSchema(ctx context.Context) error {
 		"CREATE CONSTRAINT class_section_key IF NOT EXISTS FOR (n:ClassSection) REQUIRE n.sectionKey IS UNIQUE",
 		"CREATE CONSTRAINT class_meeting_key IF NOT EXISTS FOR (n:ClassMeeting) REQUIRE n.meetingKey IS UNIQUE",
 		"CREATE CONSTRAINT exam_key IF NOT EXISTS FOR (n:Exam) REQUIRE n.examKey IS UNIQUE",
+		"CREATE CONSTRAINT instructor_key IF NOT EXISTS FOR (n:Instructor) REQUIRE n.instructorKey IS UNIQUE",
+		"CREATE CONSTRAINT knowledge_document_key IF NOT EXISTS FOR (n:KnowledgeDocument) REQUIRE n.documentKey IS UNIQUE",
 		"CREATE INDEX course_title IF NOT EXISTS FOR (n:Course) ON (n.title)",
 		"CREATE INDEX building_name IF NOT EXISTS FOR (n:Building) ON (n.buildingName)",
+		"CREATE FULLTEXT INDEX knowledge_document_text IF NOT EXISTS FOR (n:KnowledgeDocument) ON EACH [n.title, n.text, n.aliases]",
 	}
 	for _, query := range constraints {
 		if err := s.write(ctx, query, nil); err != nil {
@@ -45,6 +52,7 @@ func (s *Store) EnsureSchema(ctx context.Context) error {
 }
 
 func (s *Store) UpsertTerms(ctx context.Context, terms []waterloo.Term) (int, error) {
+	syncedAt := syncTimestamp()
 	rows := make([]map[string]any, 0, len(terms))
 	for _, term := range terms {
 		if term.TermCode == "" {
@@ -58,6 +66,8 @@ func (s *Store) UpsertTerms(ctx context.Context, terms []waterloo.Term) (int, er
 			"termEndDate":              term.TermEndDate,
 			"sixtyPercentCompleteDate": term.SixtyPercentCompleteDate,
 			"associatedAcademicYear":   term.AssociatedAcademicYear,
+			"sourceEndpoint":           "/v3/Terms",
+			"syncedAt":                 syncedAt,
 		})
 	}
 	return s.runBatches(ctx, rows, `
@@ -67,7 +77,9 @@ SET t += row`)
 }
 
 func (s *Store) UpsertAcademicOrganizations(ctx context.Context, orgs []waterloo.AcademicOrganization) (int, error) {
+	syncedAt := syncTimestamp()
 	rows := make([]map[string]any, 0, len(orgs))
+	documents := make([]knowledge.Document, 0, len(orgs))
 	for _, org := range orgs {
 		if org.Code == "" {
 			continue
@@ -78,16 +90,40 @@ func (s *Store) UpsertAcademicOrganizations(ctx context.Context, orgs []waterloo
 			"description":          org.Description,
 			"descriptionFormal":    org.DescriptionFormal,
 			"associatedCampusCode": org.AssociatedCampusCode,
+			"sourceEndpoint":       "/v3/AcademicOrganizations",
+			"syncedAt":             syncedAt,
 		})
+		documents = append(documents, knowledge.AcademicOrganizationDocument(org, syncedAt))
 	}
-	return s.runBatches(ctx, rows, `
+	if _, err := s.runBatches(ctx, rows, `
 UNWIND $rows AS row
 MERGE (o:AcademicOrganization {code: row.code})
-SET o += row`)
+SET o += row`); err != nil {
+		return 0, err
+	}
+	if err := s.upsertKnowledgeDocuments(ctx, documents, `
+UNWIND $rows AS row
+MERGE (d:KnowledgeDocument {documentKey: row.documentKey})
+SET d.kind = row.kind,
+    d.title = row.title,
+    d.text = row.text,
+    d.aliases = row.aliases,
+    d.contentHash = row.contentHash,
+    d.sourceEndpoint = row.sourceEndpoint,
+    d.sourceEntityKey = row.sourceEntityKey,
+    d.entityUri = row.entityUri,
+    d.syncedAt = row.syncedAt
+MATCH (entity:AcademicOrganization {code: row.sourceEntityKey})
+MERGE (d)-[:DESCRIBES]->(entity)`); err != nil {
+		return 0, err
+	}
+	return len(rows), nil
 }
 
 func (s *Store) UpsertSubjects(ctx context.Context, subjects []waterloo.Subject) (int, error) {
+	syncedAt := syncTimestamp()
 	rows := make([]map[string]any, 0, len(subjects))
+	documents := make([]knowledge.Document, 0, len(subjects))
 	for _, subject := range subjects {
 		if subject.Code == "" {
 			continue
@@ -98,7 +134,10 @@ func (s *Store) UpsertSubjects(ctx context.Context, subjects []waterloo.Subject)
 			"descriptionAbbreviated":    subject.DescriptionAbbreviated,
 			"description":               subject.Description,
 			"associatedAcademicOrgCode": subject.AssociatedAcademicOrgCode,
+			"sourceEndpoint":            "/v3/Subjects",
+			"syncedAt":                  syncedAt,
 		})
+		documents = append(documents, knowledge.SubjectDocument(subject, syncedAt))
 	}
 	if _, err := s.runBatches(ctx, rows, `
 UNWIND $rows AS row
@@ -113,11 +152,29 @@ MERGE (o:AcademicOrganization {code: row.associatedAcademicOrgCode})
 MERGE (s)-[:PART_OF]->(o)`); err != nil {
 		return 0, err
 	}
+	if err := s.upsertKnowledgeDocuments(ctx, documents, `
+UNWIND $rows AS row
+MERGE (d:KnowledgeDocument {documentKey: row.documentKey})
+SET d.kind = row.kind,
+    d.title = row.title,
+    d.text = row.text,
+    d.aliases = row.aliases,
+    d.contentHash = row.contentHash,
+    d.sourceEndpoint = row.sourceEndpoint,
+    d.sourceEntityKey = row.sourceEntityKey,
+    d.entityUri = row.entityUri,
+    d.syncedAt = row.syncedAt
+MATCH (entity:Subject {code: row.sourceEntityKey})
+MERGE (d)-[:DESCRIBES]->(entity)`); err != nil {
+		return 0, err
+	}
 	return len(rows), nil
 }
 
 func (s *Store) UpsertLocations(ctx context.Context, locations []waterloo.Location) (int, error) {
+	syncedAt := syncTimestamp()
 	rows := make([]map[string]any, 0, len(locations))
+	documents := make([]knowledge.Document, 0, len(locations))
 	for _, location := range locations {
 		if location.BuildingCode == "" {
 			continue
@@ -130,7 +187,10 @@ func (s *Store) UpsertLocations(ctx context.Context, locations []waterloo.Locati
 			"alternateBuildingNames": location.AlternateBuildingNames,
 			"latitude":               floatValue(location.Latitude),
 			"longitude":              floatValue(location.Longitude),
+			"sourceEndpoint":         "/v3/Locations",
+			"syncedAt":               syncedAt,
 		})
+		documents = append(documents, knowledge.BuildingDocument(location, syncedAt))
 	}
 	if _, err := s.runBatches(ctx, rows, `
 UNWIND $rows AS row
@@ -145,15 +205,34 @@ MERGE (parent:Building {buildingCode: row.parentBuildingCode})
 MERGE (b)-[:PART_OF]->(parent)`); err != nil {
 		return 0, err
 	}
+	if err := s.upsertKnowledgeDocuments(ctx, documents, `
+UNWIND $rows AS row
+MERGE (d:KnowledgeDocument {documentKey: row.documentKey})
+SET d.kind = row.kind,
+    d.title = row.title,
+    d.text = row.text,
+    d.aliases = row.aliases,
+    d.contentHash = row.contentHash,
+    d.sourceEndpoint = row.sourceEndpoint,
+    d.sourceEntityKey = row.sourceEntityKey,
+    d.entityUri = row.entityUri,
+    d.syncedAt = row.syncedAt
+MATCH (entity:Building {buildingCode: row.sourceEntityKey})
+MERGE (d)-[:DESCRIBES]->(entity)`); err != nil {
+		return 0, err
+	}
 	return len(rows), nil
 }
 
 func (s *Store) UpsertCourses(ctx context.Context, courses []waterloo.Course) (int, error) {
+	syncedAt := syncTimestamp()
 	rows := make([]map[string]any, 0, len(courses))
+	documents := make([]knowledge.Document, 0, len(courses))
 	for _, course := range courses {
 		if course.TermCode == "" || course.CourseID == "" {
 			continue
 		}
+		document := knowledge.CourseDocument(course, syncedAt)
 		rows = append(rows, map[string]any{
 			"offeringKey":                 graph.OfferingKey(course.TermCode, course.CourseID, course.CourseOfferNumber),
 			"courseCode":                  graph.CourseCode(course.SubjectCode, course.CatalogNumber),
@@ -176,7 +255,10 @@ func (s *Store) UpsertCourses(ctx context.Context, courses []waterloo.Course) (i
 			"dropConsentCode":             course.DropConsentCode,
 			"dropConsentDescription":      course.DropConsentDescription,
 			"requirementsDescription":     course.RequirementsDescription,
+			"sourceEndpoint":              document.SourceEndpoint,
+			"syncedAt":                    syncedAt,
 		})
+		documents = append(documents, document)
 	}
 	if _, err := s.runBatches(ctx, rows, `
 UNWIND $rows AS row
@@ -195,7 +277,9 @@ SET c.subjectCode = row.subjectCode,
     c.title = row.title,
     c.descriptionAbbreviated = row.descriptionAbbreviated,
     c.description = row.description,
-    c.requirementsDescription = row.requirementsDescription
+    c.requirementsDescription = row.requirementsDescription,
+    c.sourceEndpoint = row.sourceEndpoint,
+    c.syncedAt = row.syncedAt
 MERGE (o)-[:INSTANCE_OF]->(c)`); err != nil {
 		return 0, err
 	}
@@ -213,18 +297,37 @@ MERGE (a:AcademicOrganization {code: row.associatedAcademicOrgCode})
 MERGE (o)-[:OWNED_BY]->(a)`); err != nil {
 		return 0, err
 	}
+	if err := s.upsertKnowledgeDocuments(ctx, documents, `
+UNWIND $rows AS row
+MERGE (d:KnowledgeDocument {documentKey: row.documentKey})
+SET d.kind = row.kind,
+    d.title = row.title,
+    d.text = row.text,
+    d.aliases = row.aliases,
+    d.contentHash = row.contentHash,
+    d.sourceEndpoint = row.sourceEndpoint,
+    d.sourceEntityKey = row.sourceEntityKey,
+    d.entityUri = row.entityUri,
+    d.syncedAt = row.syncedAt
+MATCH (entity:Course {courseCode: row.sourceEntityKey})
+MERGE (d)-[:DESCRIBES]->(entity)`); err != nil {
+		return 0, err
+	}
 	return len(rows), nil
 }
 
 func (s *Store) UpsertClasses(ctx context.Context, classes []waterloo.Class) (int, int, error) {
+	syncedAt := syncTimestamp()
 	sectionRows := make([]map[string]any, 0, len(classes))
 	meetingRows := make([]map[string]any, 0)
+	instructorRows := make([]map[string]any, 0)
 	for _, class := range classes {
 		if class.TermCode == "" || class.CourseID == "" {
 			continue
 		}
 		sectionKey := graph.SectionKey(class.TermCode, class.CourseID, class.CourseOfferNumber, class.SessionCode, class.ClassSection, class.ClassNumber)
 		offeringKey := graph.OfferingKey(class.TermCode, class.CourseID, class.CourseOfferNumber)
+		sourceEndpoint := "/v3/ClassSchedules/" + url.PathEscape(class.TermCode) + "/" + url.PathEscape(class.CourseID)
 		sectionRows = append(sectionRows, map[string]any{
 			"sectionKey":               sectionKey,
 			"offeringKey":              offeringKey,
@@ -242,6 +345,8 @@ func (s *Store) UpsertClasses(ctx context.Context, classes []waterloo.Class) (in
 			"enrollConsentDescription": class.EnrollConsentDescription,
 			"dropConsentCode":          class.DropConsentCode,
 			"dropConsentDescription":   class.DropConsentDescription,
+			"sourceEndpoint":           sourceEndpoint,
+			"syncedAt":                 syncedAt,
 		})
 		for _, meeting := range class.ScheduleData {
 			meetingRows = append(meetingRows, map[string]any{
@@ -260,6 +365,24 @@ func (s *Store) UpsertClasses(ctx context.Context, classes []waterloo.Class) (in
 				"classMeetingDayPatternCode":  meeting.ClassMeetingDayPatternCode,
 				"classMeetingWeekPatternCode": meeting.ClassMeetingWeekPatternCode,
 				"locationName":                meeting.LocationName,
+				"sourceEndpoint":              sourceEndpoint,
+				"syncedAt":                    syncedAt,
+			})
+		}
+		for _, instructor := range class.InstructorData {
+			instructorKey := graph.InstructorKey(instructor.InstructorUniqueIdentifier)
+			if instructorKey == "" {
+				continue
+			}
+			instructorRows = append(instructorRows, map[string]any{
+				"instructorKey":      instructorKey,
+				"sectionKey":         sectionKey,
+				"firstName":          instructor.InstructorFirstName,
+				"lastName":           instructor.InstructorLastName,
+				"roleCode":           instructor.InstructorRoleCode,
+				"classMeetingNumber": instructor.ClassMeetingNumber,
+				"sourceEndpoint":     sourceEndpoint,
+				"syncedAt":           syncedAt,
 			})
 		}
 	}
@@ -279,10 +402,25 @@ MERGE (section:ClassSection {sectionKey: row.sectionKey})
 MERGE (meeting)-[:MEETING_OF]->(section)`); err != nil {
 		return 0, 0, err
 	}
+	if _, err := s.runBatches(ctx, instructorRows, `
+UNWIND $rows AS row
+MERGE (instructor:Instructor {instructorKey: row.instructorKey})
+SET instructor.firstName = row.firstName,
+    instructor.lastName = row.lastName,
+    instructor.sourceEndpoint = row.sourceEndpoint,
+    instructor.syncedAt = row.syncedAt
+MATCH (section:ClassSection {sectionKey: row.sectionKey})
+MERGE (instructor)-[teaches:TEACHES {
+    roleCode: row.roleCode,
+    classMeetingNumber: row.classMeetingNumber
+}]->(section)`); err != nil {
+		return 0, 0, err
+	}
 	return len(sectionRows), len(meetingRows), nil
 }
 
 func (s *Store) UpsertExams(ctx context.Context, exams []waterloo.Exam) (int, error) {
+	syncedAt := syncTimestamp()
 	rows := make([]map[string]any, 0, len(exams))
 	for _, exam := range exams {
 		if exam.TermCode == "" {
@@ -300,6 +438,8 @@ func (s *Store) UpsertExams(ctx context.Context, exams []waterloo.Exam) (int, er
 			"examDuration":        exam.ExamDuration,
 			"notes":               exam.Notes,
 			"termCode":            exam.TermCode,
+			"sourceEndpoint":      "/v3/ExamSchedules/" + url.PathEscape(exam.TermCode),
+			"syncedAt":            syncedAt,
 		})
 	}
 	return s.runBatches(ctx, rows, `
@@ -308,6 +448,36 @@ MERGE (exam:Exam {examKey: row.examKey})
 SET exam += row
 MERGE (term:Term {termCode: row.termCode})
 MERGE (exam)-[:IN_TERM]->(term)`)
+}
+
+func (s *Store) upsertKnowledgeDocuments(ctx context.Context, documents []knowledge.Document, query string) error {
+	rows := make([]map[string]any, 0, len(documents))
+	seen := make(map[string]struct{}, len(documents))
+	for _, document := range documents {
+		if document.DocumentKey == "" || document.SourceEntityKey == "" {
+			continue
+		}
+		if _, ok := seen[document.DocumentKey]; ok {
+			continue
+		}
+		seen[document.DocumentKey] = struct{}{}
+		rows = append(rows, map[string]any{
+			"documentKey":     document.DocumentKey,
+			"kind":            document.Kind,
+			"title":           document.Title,
+			"text":            document.Text,
+			"aliases":         document.Aliases,
+			"contentHash":     document.ContentHash,
+			"sourceEndpoint":  document.SourceEndpoint,
+			"sourceEntityKey": document.SourceEntityKey,
+			"entityUri":       document.EntityURI,
+			"syncedAt":        document.SyncedAt,
+		})
+	}
+	if _, err := s.runBatches(ctx, rows, query); err != nil {
+		return fmt.Errorf("upsert knowledge documents: %w", err)
+	}
+	return nil
 }
 
 func (s *Store) runBatches(ctx context.Context, rows []map[string]any, query string) (int, error) {
@@ -362,4 +532,8 @@ func floatValue(value *float64) any {
 		return nil
 	}
 	return *value
+}
+
+func syncTimestamp() string {
+	return time.Now().UTC().Format(time.RFC3339Nano)
 }

@@ -16,9 +16,13 @@ then properties and relationships are updated. Constraints are created by
 | `Building` | `buildingCode` | Locations |
 | `ClassSection` | `sectionKey` | Scheduled classes |
 | `ClassMeeting` | `meetingKey` | Class schedule entries |
+| `Instructor` | `instructorKey` | Hashed upstream instructor identifier |
 | `Exam` | `examKey` | Exam schedules |
+| `KnowledgeDocument` | `documentKey` | Deterministic searchable projection |
 
-Indexes exist on `Course.title` and `Building.buildingName`.
+`KnowledgeDocument` has a full-text index over title, text, and aliases, plus a
+cosine vector index over `embedding`. The embedding dimension is configured at
+index creation.
 
 ## Relationships
 
@@ -32,7 +36,9 @@ flowchart LR
     B[Building] -->|PART_OF| PB[Parent Building]
     CS[ClassSection] -->|SECTION_OF| CO
     CM[ClassMeeting] -->|MEETING_OF| CS
+    I[Instructor] -->|TEACHES| CS
     E[Exam] -->|IN_TERM| T
+    KD[KnowledgeDocument] -->|DESCRIBES| C
 ```
 
 The current API does not provide a reliable normalized building identifier for
@@ -48,12 +54,19 @@ Key construction is centralized in `internal/graph`:
 - `sectionKey`:
   `termCode|courseID|courseOfferNumber|sessionCode|classSection|classNumber`.
 - `meetingKey`: `sectionKey|classMeetingNumber`.
+- `instructorKey`: SHA-256 digest of the trimmed upstream identifier.
 - `examKey`: `exam:` plus the SHA-1 digest of trimmed term, display name,
   sections, start date, and start time joined with `|`.
+- `documentKey`: kind prefix plus the canonical source entity key, for example
+  `course:CS 135`.
 
 SHA-1 is used here only as a deterministic identifier, not for security.
 Changing any formula can create duplicate nodes and orphan existing
 relationships.
+
+Knowledge documents store `contentHash`, source endpoint, source entity key,
+entity URI, and sync time. Embeddings store their model and matching content
+hash so stale vectors cannot be returned.
 
 ## Schema Change Checklist
 

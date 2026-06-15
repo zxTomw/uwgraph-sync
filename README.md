@@ -1,58 +1,45 @@
-# UW Graph - Sync
+# UW Graph
 
-Go service that periodically syncs University of Waterloo academic data (courses, schedules, terms, etc.) into Neo4j.
+Docker-first Go services that sync University of Waterloo academic data into
+Neo4j and expose it as a cited knowledge base for AI agents.
 
-## Data Ingested
+## Services
 
-- Terms
-- Subjects
-- Academic organizations
-- Building locations
-- Courses and course offerings for configured terms
-- Class sections and class meetings for configured terms
-- Exam schedules for configured terms
-
-Important dates, holidays, food services, and WCMS content are intentionally not fetched in v1.
+- `uwgraph`: periodically syncs terms, courses, organizations, locations,
+  sections, instructors, meetings, and exams.
+- `uwgraph-embed`: projects searchable documents and maintains Neo4j vector
+  embeddings.
+- `uwgraph-serve`: provides an authenticated REST API and Streamable HTTP MCP
+  endpoint.
 
 ## Quick Start
 
-Docker Compose is the primary development workflow. It builds the Go worker,
-starts Neo4j, waits for the database to become healthy, and persists graph data
-in a named volume.
+Neo4j provides graph, full-text, and vector retrieval. No separate vector
+database is required. You must provide Waterloo credentials and an
+OpenAI-compatible embeddings endpoint.
 
 ```sh
 cp .env.example .env
-# Set WATERLOO_API_KEY and adjust the development password in .env.
+# Set WATERLOO_API_KEY, NEO4J_PASSWORD, embedding values, and API keys.
 make up
 ```
 
-Neo4j Browser is available at `http://localhost:7474`. Stop the stack with
-`Ctrl+C` or `make down`. Remove persisted database data with
-`docker compose down --volumes`.
-
-The service runs one sync immediately, then repeats on
-`UWGRAPH_SYNC_INTERVAL`. A tick is skipped when the previous sync is still
-running.
+Neo4j Browser is at `http://localhost:7474`; the knowledge service is at
+`http://localhost:8080`. The first API start may retry while data is synced,
+embedded, and indexes become online. Stop with `make down`.
 
 ## Configuration
 
-Required values:
-
-- `WATERLOO_API_KEY`
-- `NEO4J_USERNAME`
-- `NEO4J_PASSWORD`
-- `UWGRAPH_TERM_CODES`, comma-separated, for example `1251,1255`
-
-Optional values and defaults are documented in `.env.example`. Notable runtime
-settings include `UWGRAPH_SYNC_INTERVAL=6h`, `UWGRAPH_SYNC_TIMEOUT=30m`, and
-`UWGRAPH_STARTUP_TIMEOUT=2m`. Existing environment variables take precedence
-over values loaded from `.env`.
+Required values are documented in `.env.example`. Embedding dimensions must
+match the selected model and become part of the Neo4j vector index definition.
+After changing model dimensions, run `make rebuild-index`.
 
 ## Development Commands
 
 ```sh
-make up                # Build and run the complete stack
-make logs              # Follow app and Neo4j logs
+make up                # Run Neo4j, sync, embedding, and knowledge API
+make embed-once        # Backfill stale embeddings and exit
+make rebuild-index     # Recreate the vector index and backfill it
 make build             # Build the production image
 make test              # Run unit tests with race detection
 make integration-test  # Run tagged tests against Compose Neo4j
@@ -60,20 +47,16 @@ make check             # Run the fast credential-free validation gate
 make verify            # Build and run every local/CI verification gate
 ```
 
-For direct host debugging, start Neo4j separately and run:
+For direct host debugging:
 
 ```sh
 go run ./cmd/uwgraph
+go run ./cmd/uwgraph-embed --once
+go run ./cmd/uwgraph-serve
 ```
 
-The binary loads `.env` automatically and logs structured JSON to stdout.
-
-## Container Design
-
-The production image uses a multi-stage Go build and a `scratch` runtime. It
-contains only the statically linked worker binary and CA certificates, runs as
-non-root user `65532`, and exposes no port because the process is a scheduled
-worker rather than an HTTP service.
+All binaries load `.env`, log structured JSON, and share one non-root
+`scratch` image. See [Knowledge API](docs/knowledge-api.md) for REST/MCP usage.
 
 ## Repository References
 
@@ -82,3 +65,5 @@ worker rather than an HTTP service.
   failure semantics.
 - [Graph model](docs/graph-model.md): Neo4j identities, relationships, and
   schema-change checklist.
+- [Knowledge API](docs/knowledge-api.md): retrieval, authentication, and agent
+  integration.
