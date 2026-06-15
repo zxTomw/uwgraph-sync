@@ -56,7 +56,8 @@ make logs              # Follow app and Neo4j logs
 make build             # Build the production image
 make test              # Run unit tests with race detection
 make integration-test  # Run tagged tests against Compose Neo4j
-make check             # Run formatting, vet, tests, and Compose validation
+make check             # Run the fast credential-free validation gate
+make verify            # Build and run every local/CI verification gate
 ```
 
 For direct host debugging, start Neo4j separately and run:
@@ -73,3 +74,11 @@ The production image uses a multi-stage Go build and a `scratch` runtime. It
 contains only the statically linked worker binary and CA certificates, runs as
 non-root user `65532`, and exposes no port because the process is a scheduled
 worker rather than an HTTP service.
+
+## Repository References
+
+- [AGENTS.md](AGENTS.md): canonical contribution and agent instructions.
+- [Architecture](docs/architecture.md): package boundaries, lifecycle, and
+  failure semantics.
+- [Graph model](docs/graph-model.md): Neo4j identities, relationships, and
+  schema-change checklist.
